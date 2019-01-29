@@ -2,6 +2,7 @@ package com.bytedance.android.lesson.restapi.solution;
 
 import android.content.Intent;
 import android.net.Uri;
+import android.nfc.Tag;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
@@ -12,8 +13,14 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.Toast;
 
+import com.bumptech.glide.Glide;
 import com.bytedance.android.lesson.restapi.solution.bean.Feed;
+import com.bytedance.android.lesson.restapi.solution.bean.FeedResponse;
+import com.bytedance.android.lesson.restapi.solution.bean.PostVideoResponse;
+import com.bytedance.android.lesson.restapi.solution.newtork.IMiniDouyinService;
+import com.bytedance.android.lesson.restapi.solution.newtork.RetrofitManager;
 import com.bytedance.android.lesson.restapi.solution.utils.ResourceUtils;
 
 import java.io.File;
@@ -23,6 +30,9 @@ import java.util.List;
 import okhttp3.MediaType;
 import okhttp3.MultipartBody;
 import okhttp3.RequestBody;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class Solution2C2Activity extends AppCompatActivity {
 
@@ -44,7 +54,7 @@ public class Solution2C2Activity extends AppCompatActivity {
         initBtns();
     }
 
-    private void initBtns() {
+    public void initBtns() {
         mBtn = findViewById(R.id.btn);
         mBtn.setOnClickListener(new View.OnClickListener() {
             @Override public void onClick(View v) {
@@ -86,6 +96,7 @@ public class Solution2C2Activity extends AppCompatActivity {
 
                 // TODO-C2 (10) Uncomment these 2 lines, assign image url of Feed to this url variable
 //                String url = mFeeds.get(i).;
+                Glide.with(iv.getContext()).load(mFeeds.get(i).getImage_url()).into(iv);
 //                Glide.with(iv.getContext()).load(url).into(iv);
             }
 
@@ -97,11 +108,23 @@ public class Solution2C2Activity extends AppCompatActivity {
 
     public void chooseImage() {
         // TODO-C2 (4) Start Activity to select an image
+        Intent intent = new Intent();   //创建Intent对象
+        intent.setType("image/*");
+        intent.setAction(Intent.ACTION_GET_CONTENT);  //给Intent设置动作
+        startActivityForResult(Intent.createChooser(intent,"select Picture"),PICK_IMAGE);  //将Intent传递给Activity
+
+
+
     }
 
 
     public void chooseVideo() {
         // TODO-C2 (5) Start Activity to select a video
+        Intent intent = new Intent();
+        intent.setType("video/*");
+        intent.setAction(Intent.ACTION_GET_CONTENT);
+        startActivityForResult(Intent.createChooser(intent,"select Video"),PICK_VIDEO);  //将Intent传递给Activity
+
     }
 
     @Override
@@ -132,20 +155,78 @@ public class Solution2C2Activity extends AppCompatActivity {
     }
 
     private void postVideo() {
-        mBtn.setText("POSTING...");
+        mBtn.setText("POSTING.上传中");
         mBtn.setEnabled(false);
 
         // TODO-C2 (6) Send Request to post a video with its cover image
+        RetrofitManager.get(IMiniDouyinService.HOST).create(IMiniDouyinService.class).createVideo(
+                "2220170659","minidou",getMultipartFromUri("cover_image",mSelectedImage),
+                getMultipartFromUri("video",mSelectedVideo)).enqueue(    //上述参数是服务器要求的字段，不可随意更改
+                new Callback<PostVideoResponse>() {
+
+                    @Override
+                    public void onResponse(Call<PostVideoResponse> call, Response<PostVideoResponse> response) {
+                        Log.d(TAG,"mSelectedImage:"+mSelectedImage+"abbba");
+                        Log.d(TAG,"mSelectedVideo:"+mSelectedVideo+"aaaaa");
+                        Log.d(TAG,"onResponse() called with: call = [" + call + "], response = [" + response.body() + "ll]");
+                        String toast;
+
+                        if(response.isSuccessful()){
+                            toast = "上传成功!";
+                            mBtn.setText(R.string.success_try_refresh);
+                        }else{
+                            toast = "上传失败";
+                            mBtn.setText(R.string.post_it);
+                        }
+                        Toast.makeText(Solution2C2Activity.this,toast,Toast.LENGTH_LONG).show();
+                        mBtn.setEnabled(true);
+                    }
+
+                    @Override
+                    public void onFailure(Call<PostVideoResponse> call, Throwable t) {
+                        Log.d(TAG, "onFailure() called with: call = [" + call + "], t = [" + t + "]");
+                        Toast.makeText(Solution2C2Activity.this, t.getMessage(), Toast.LENGTH_LONG).show();
+                        mBtn.setText(R.string.post_it);
+                        mBtn.setEnabled(true);
+
+
+                    }
+                });
+
         // if success, make a text Toast and show
+
+
     }
 
     public void fetchFeed(View view) {
-        mBtnRefresh.setText("requesting...");
+        mBtnRefresh.setText("请求中..");
         mBtnRefresh.setEnabled(false);
 
         // TODO-C2 (9) Send Request to fetch feed
         // if success, assign data to mFeeds and call mRv.getAdapter().notifyDataSetChanged()
         // don't forget to call resetRefreshBtn() after response received
+        RetrofitManager.get(IMiniDouyinService.HOST).create(IMiniDouyinService.class).fetchFeed().enqueue(new Callback<FeedResponse>() {
+            @Override
+            public void onResponse(Call<FeedResponse> call, Response<FeedResponse> response) {
+                Log.d(TAG, "onResponse() called with: call = [" + call + "], response = [" + response.body() + "]");
+                if (response.isSuccessful()) {
+                   mFeeds = response.body().getFeeds();
+                    mRv.getAdapter().notifyDataSetChanged();
+
+                } else {
+                    Log.d(TAG, "onResponse() called with: response.errorBody() = [" + response.errorBody() + "mm]");
+                    Toast.makeText(Solution2C2Activity.this, "fetch feed failure!", Toast.LENGTH_LONG).show();
+                }
+                resetRefreshBtn();
+            }
+
+            @Override
+            public void onFailure(Call<FeedResponse> call, Throwable t) {
+
+            }
+        });
+
+
     }
 
     private void resetRefreshBtn() {

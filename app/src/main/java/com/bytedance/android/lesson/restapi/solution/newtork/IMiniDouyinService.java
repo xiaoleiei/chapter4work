@@ -12,10 +12,19 @@ import retrofit2.http.Part;
 import retrofit2.http.Query;
 
 /**
- * @author Xavier.S
- * @date 2019.01.17 20:38
+ * @author reset
+ * @date 2019.01.27 20:38
  */
 public interface IMiniDouyinService {
-    // TODO-C2 (7) Implement your MiniDouyin PostVideo Request here, url: (POST) http://10.108.10.39:8080/minidouyin/video
-    // TODO-C2 (8) Implement your MiniDouyin Feed Request here, url: http://10.108.10.39:8080/minidouyin/feed
+    String HOST = "http://10.108.10.39:8080/";
+
+    @Multipart
+    @POST("/minidouyin/video")
+    Call<PostVideoResponse> createVideo(
+            @Query("student_id") String studentId,
+            @Query("user_name") String userName,
+            @Part MultipartBody.Part image, @Part MultipartBody.Part video);
+
+    @GET("/minidouyin/feed")
+    Call<FeedResponse> fetchFeed();
 }

@@ -11,7 +11,27 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        findViewById(R.id.btn_s3).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                startActivity(new Intent(MainActivity.this, RecordVideoActivity.class));
+
+            }
+
+        });
+
+        findViewById(R.id.btn_s4).setOnClickListener(new View.OnClickListener(){
+
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(MainActivity.this, PlayVideoActivity.class));
+            }
+        });
+
     }
+
+
 
     public void Solution2C1(View view) {
         startActivity(new Intent(this, Solution2C1Activity.class));
@@ -21,4 +41,21 @@ public class MainActivity extends AppCompatActivity {
         startActivity(new Intent(this, Solution2C2Activity.class));
 
     }
+
+    public void Exercise3(View view) {
+        startActivity(new Intent(this, Exercises3.class));
+
+    }
+
+
+    //TODO 增加view
+    public void Solution2C3(View view){
+      //  startActivity(new Intent(this, xxxxxxActivity.class));
+    }
+
+    public void Solution2C4(View view){
+        //  startActivity(new Intent(this, xxxxxxActivity.class));
+    }
+
+
 }
